@@ -1,10 +1,3 @@
-/*=================================================
-#>= Institution: ITESM CEM
-#>= Author: Roberto Gervacio ~~ Mx ~~
-#>= Last Update: 28-10-19
-#>= Aditional Comments: You can use the method showInRange()
-===================================================*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "ip.h"
@@ -23,9 +16,9 @@ void printBinary(unsigned int number){
 
 int main(){
 
-	IP* ipPtr = createIP(135, 115, 0, 0, 25);
+	IP* ipPtr = createIP(192, 0, 0, 0, 25);
 	unsigned int subs[] = {
-		131, 115, 145, 112
+		14, 810, 910, 1150, 2015, 3020, 4050, 5175
 	};
 	printIP(ipPtr, 1);
 
@@ -39,7 +32,7 @@ int main(){
 	return 0;
 }
 
-void printAsIP(unsigned int ip, char* originalIP){
+void printAsIP(unsigned int ip, unsigned char* originalIP){
 	//printBinary(ipPtr->realMask);
 	void* ipp = &ip;
 	printf("%d.%d.%d.%d",
@@ -52,21 +45,36 @@ void printAsIP(unsigned int ip, char* originalIP){
 
 void calculateSubRed(unsigned int sub, const IP* ipPtr){
 	char zeros = 32 - ipPtr->mask;
-	printf("%d -\t", sub);
+	unsigned int brodcast = -1, tmp = -1;
+	brodcast <<= zeros;
+	brodcast ^= tmp;
+
+	//subred
+	printf("%d \t| ", sub);
 	sub <<= zeros;
+	// ip
 	printAsIP(sub, ipPtr->address);
+	printf("\t| ");
+	//range first
+	printAsIP(sub + 1, ipPtr->address);
+	printf("\t- ");
+	//range last
+	printAsIP(brodcast + sub - 1, ipPtr->address);
+	printf("\t| ");
+	//brodcast
+	printAsIP(brodcast + sub, ipPtr->address);
 	printf("\n");
 }
 
 void showRoutingTable(IP* ipPtr, unsigned int* subs, int size){
-	printf("Subred\tIP\n");
+	printf("Subred\t\tIP\t\t\tRango\t\t\tBrodcast\n");
 	for(int i = 0; i < size; i++){
 		calculateSubRed(subs[i], ipPtr);
 	}
 }
 
 void showInRange(const unsigned int low, const unsigned int high, IP* ipPtr){
-	
+
 	printf("Subred\tIP\n");
 	for(unsigned int i = low; i <= high; i++){
 		calculateSubRed(i, ipPtr);
@@ -90,27 +98,19 @@ void releaseIP(IP* ipPtr){
 	ipPtr = NULL;
 }
 
-IP* createIP(const char a, const char b, const char c, const char d, const unsigned int mask){
+IP* createIP(const unsigned char a, const unsigned char b, const unsigned char c, const unsigned char d, const unsigned int mask){
 
 	IP* newIp = malloc(sizeof(IP));
 
-	newIp->address = calloc(4, sizeof(char));
+	newIp->address = calloc(4, sizeof(unsigned char));
 	newIp->address[0] = a;
 	newIp->address[1] = b;
 	newIp->address[2] = c;
 	newIp->address[3] = d;
 	newIp->mask = mask;
 
-	newIp->realMask = 0;
-	unsigned int current_bit = 1;
-	current_bit <<= 31;
-	char counter = 0;
-	for(char i = 0; i < 32; i++){
-		if(counter >= newIp->mask){ break; }
-		newIp->realMask ^= current_bit;
-		current_bit >>= 1;
-		counter++;
-	}
+	newIp->realMask = -1;
+	newIp->realMask <<= (32 - newIp->mask);
 
 	return newIp;
 }
